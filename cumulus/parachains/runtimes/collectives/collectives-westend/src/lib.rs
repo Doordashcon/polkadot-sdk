@@ -114,6 +114,9 @@ use xcm_runtime_apis::{
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
+// Secretary Configuration
+pub mod secretary;
+
 impl_opaque_keys! {
 	pub struct SessionKeys {
 		pub aura: Aura,
@@ -302,6 +305,8 @@ pub enum ProxyType {
 	Fellowship,
 	/// Ambassador proxy. Allows calls related to the Ambassador Program.
 	Ambassador,
+	/// Secretary proxy. Allows calls related to the Secretary collective
+	Secretary,
 }
 impl Default for ProxyType {
 	fn default() -> Self {
@@ -315,42 +320,49 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::NonTransfer => !matches!(c, RuntimeCall::Balances { .. }),
 			ProxyType::CancelProxy => matches!(
 				c,
-				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-					RuntimeCall::Utility { .. } |
-					RuntimeCall::Multisig { .. }
+				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. })
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
 			),
 			ProxyType::Collator => matches!(
 				c,
-				RuntimeCall::CollatorSelection { .. } |
-					RuntimeCall::Utility { .. } |
-					RuntimeCall::Multisig { .. }
+				RuntimeCall::CollatorSelection { .. }
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
 			),
 			ProxyType::Alliance => matches!(
 				c,
-				RuntimeCall::AllianceMotion { .. } |
-					RuntimeCall::Alliance { .. } |
-					RuntimeCall::Utility { .. } |
-					RuntimeCall::Multisig { .. }
+				RuntimeCall::AllianceMotion { .. }
+					| RuntimeCall::Alliance { .. }
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
 			),
 			ProxyType::Fellowship => matches!(
 				c,
-				RuntimeCall::FellowshipCollective { .. } |
-					RuntimeCall::FellowshipReferenda { .. } |
-					RuntimeCall::FellowshipCore { .. } |
-					RuntimeCall::FellowshipSalary { .. } |
-					RuntimeCall::FellowshipTreasury { .. } |
-					RuntimeCall::Utility { .. } |
-					RuntimeCall::Multisig { .. }
+				RuntimeCall::FellowshipCollective { .. }
+					| RuntimeCall::FellowshipReferenda { .. }
+					| RuntimeCall::FellowshipCore { .. }
+					| RuntimeCall::FellowshipSalary { .. }
+					| RuntimeCall::FellowshipTreasury { .. }
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
 			),
 			ProxyType::Ambassador => matches!(
 				c,
-				RuntimeCall::AmbassadorCollective { .. } |
-					RuntimeCall::AmbassadorReferenda { .. } |
-					RuntimeCall::AmbassadorContent { .. } |
-					RuntimeCall::AmbassadorCore { .. } |
-					RuntimeCall::AmbassadorSalary { .. } |
-					RuntimeCall::Utility { .. } |
-					RuntimeCall::Multisig { .. }
+				RuntimeCall::AmbassadorCollective { .. }
+					| RuntimeCall::AmbassadorReferenda { .. }
+					| RuntimeCall::AmbassadorContent { .. }
+					| RuntimeCall::AmbassadorCore { .. }
+					| RuntimeCall::AmbassadorSalary { .. }
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
+			),
+			ProxyType::Secretary => matches!(
+				c,
+				RuntimeCall::SecretaryCollective { .. }
+					| RuntimeCall::SecretarySalary { .. }
+					| RuntimeCall::Utility { .. }
+					| RuntimeCall::Multisig { .. }
 			),
 		}
 	}
@@ -716,6 +728,12 @@ construct_runtime!(
 		AmbassadorContent: pallet_collective_content::<Instance1> = 75,
 
 		StateTrieMigration: pallet_state_trie_migration = 80,
+
+		// The Secretary Collective
+		// pub type SecretaryCollectiveInstance = pallet_ranked_collective::instance3;
+		SecretaryCollective: pallet_ranked_collective::<Instance3> = 90,
+		// pub type SecretarySalaryInstance = pallet_salary::Instance3;
+		SecretarySalary: pallet_salary::<Instance3> = 91,
 	}
 );
 
@@ -797,6 +815,8 @@ mod benches {
 		[pallet_salary, AmbassadorSalary]
 		[pallet_treasury, FellowshipTreasury]
 		[pallet_asset_rate, AssetRate]
+		[pallet_ranked_collective, SecretaryCollective]
+		[pallet_salary, SecretarySalary]
 	);
 }
 
